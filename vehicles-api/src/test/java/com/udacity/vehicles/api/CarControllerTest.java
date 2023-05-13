@@ -2,13 +2,11 @@ package com.udacity.vehicles.api;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.udacity.vehicles.client.maps.MapsClient;
 import com.udacity.vehicles.client.prices.PriceClient;
@@ -64,8 +62,8 @@ public class CarControllerTest {
     public void setup() {
         Car car = getCar();
         car.setId(1L);
-        given(carService.save(any())).willReturn(car);
-        given(carService.findById(any())).willReturn(car);
+        given(carService.saveOrUpdate(any())).willReturn(car);
+        given(carService.getCarById(any())).willReturn(car);
         given(carService.list()).willReturn(Collections.singletonList(car));
     }
 
@@ -90,7 +88,6 @@ public class CarControllerTest {
      */
     @Test
     public void listCars() throws Exception {
-        Car car = getCar();
         mvc.perform(get(new URI("/cars")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.carList", hasSize(1)));
@@ -119,6 +116,36 @@ public class CarControllerTest {
     public void deleteCar() throws Exception {
         mvc.perform(delete(new URI("/cars/1")))
                         .andExpect(status().is2xxSuccessful());
+    }
+
+    @Test
+    public void updateCar() throws  Exception{
+        Car car = getCar();
+        car.setId(1L);
+        car.setLocation(new Location(40.730610, -73.935242));
+        Details details = new Details();
+        Manufacturer manufacturer = new Manufacturer(101, "Chevrolet");
+        details.setManufacturer(manufacturer);
+        details.setModel("Impala Modified");
+        details.setMileage(40000);
+        details.setExternalColor("blue");
+        details.setBody("sedan");
+        details.setEngine("3.6L V6");
+        details.setFuelType("Gasoline");
+        details.setModelYear(2018);
+        details.setProductionYear(2018);
+        details.setNumberOfDoors(4);
+        car.setDetails(details);
+        car.setCondition(Condition.NEW);
+
+        mvc.perform(put("/cars/1")
+                                .content(json.write(car).getJson())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .characterEncoding("UTF-8"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(json.write(car).getJson()));
+
     }
 
     /**
