@@ -75,6 +75,7 @@ public class CarService {
                         return repository.save(updatedCar);
                     }).orElseThrow(CarNotFoundException::new);
         }
+
         return repository.save(car);
     }
 
