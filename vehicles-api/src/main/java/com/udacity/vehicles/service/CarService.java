@@ -5,6 +5,8 @@ import com.udacity.vehicles.client.prices.PriceClient;
 import com.udacity.vehicles.domain.Location;
 import com.udacity.vehicles.domain.car.Car;
 import com.udacity.vehicles.domain.car.CarRepository;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -39,7 +41,7 @@ public class CarService {
      * @param id the ID number of the car to gather information on
      * @return the requested car's information, including location and price
      */
-    public Car findById(Long id) throws CarNotFoundException {
+    public Car getCarById(Long id) throws CarNotFoundException {
 
         Car car = repository.findById(id).orElseThrow(() -> new CarNotFoundException("Car not found with the id: "+id));
 
@@ -50,7 +52,6 @@ public class CarService {
 
         String price = priceClient.getPrice(id);
         car.setPrice(price);
-
         Location address = mapsClient.getAddress(car.getLocation());
         car.setLocation(address);
 
@@ -62,16 +63,18 @@ public class CarService {
      * @param car A car object, which can be either new or existing
      * @return the new/updated car is stored in the repository
      */
-    public Car save(Car car) {
+    public Car saveOrUpdate(Car car) {
         if (car.getId() != null) {
             return repository.findById(car.getId())
                     .map(carToBeUpdated -> {
                         carToBeUpdated.setDetails(car.getDetails());
                         carToBeUpdated.setLocation(car.getLocation());
+                        carToBeUpdated.setCondition(car.getCondition());
+                        carToBeUpdated.setPrice(car.getPrice());
+                        carToBeUpdated.setModifiedAt(LocalDateTime.now());
                         return repository.save(carToBeUpdated);
                     }).orElseThrow(CarNotFoundException::new);
         }
-
         return repository.save(car);
     }
 
